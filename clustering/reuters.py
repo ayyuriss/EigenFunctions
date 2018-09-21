@@ -13,12 +13,12 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersF3"
+model = "reutersF8"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)
 nearest = 10
-k = 11
+k = 16
 batch_size = 2048
 
 
@@ -46,7 +46,7 @@ n = data_train.shape[0]
 Training
 """
 ####################################
-spin = Spin(input_shape, k, network=N.FCSpectralNet, lr=1e-2, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralMNet, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 

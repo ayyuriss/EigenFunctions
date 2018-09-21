@@ -42,11 +42,12 @@ def linesearch(func, x0, grad, expected, alpha = 0.5, beta=.5, max_iter=25):
         coef.mul_(beta)
     return torch.tensor(0.0)
 
-def constrained_linesearch(func, x0, grad, expected,constraint, alpha = 0.5, beta=.5, max_iter=25):
+def constrained_linesearch(func, x0, grad, expected, constraint, alpha = 0.5, beta=.5, max_iter=25):
     f0,_ = func(x0)
     coef = torch.tensor(1.0)
     for _ in range(max_iter):
         f1,c1 = func(x0+grad*coef)
+        #print(c1)
         if f0-f1 > alpha*expected*coef and constraint(c1):
             return coef
         coef.mul_(beta)
