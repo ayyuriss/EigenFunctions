@@ -52,15 +52,15 @@ class SpectralSpin(BaseSpinet):
         theta0 = self.network.flaten.get()
         func = self.cs_func(X,Lap,theta0)
         
-        
         self.logger.log("Seq Rayleigh",old_seq_ray)
         self.logger.log("Grsmn Dist Old",grass_distance)
         self.logger.log("Rayleigh",old_ray)
         self.logger.log("Seq Grad norm",fullstep_seq_ray.norm())
         self.logger.log("L1 wieghts before",theta0.abs().mean())
         self.logger.log("Expected Ray",expected_ray)
+
+
         constraint = lambda x: x<1.5*self.max_grsmn
-        
         coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
@@ -80,10 +80,10 @@ class SpectralSpin(BaseSpinet):
         #self.logger.log("CircleS",t0)
         self.logger.log("LS step",coef)
         self.logger.log("L1 wieghts after",self.network.l1_weight().detach())
-        
-        
+
+
         return U.get(new_seq_ray)
-        
+
         #return U.get(new_grass)
 
     def Fvp(self,grad):

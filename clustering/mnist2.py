@@ -11,7 +11,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 
 print(Spin.name,Spin.info)
-model = "MNISTFS"
+model = "MNISTF9"
 
 print("Loading Data")
 data, labels = pkl.gdepicklize("./../../datasets/mnist_all.pkl.gz")
@@ -64,7 +64,7 @@ while True:
     if not i%5:
         spin.save("./checks/"+model)
         V_pred = U.get(spin(U.torchify(data_test)))
-        for l in [10,11,12,13,14,15,18,19,20]:
+        for l in range(10,k):
             spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
 
     if i > 30:
@@ -73,7 +73,7 @@ while True:
         for i in range(0,n,step):
             D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)]))))
         D = np.concatenate(D,axis=0)        
-        for l in range(4,k):
+        for l in range(10,k):
             spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
         i = 1
         

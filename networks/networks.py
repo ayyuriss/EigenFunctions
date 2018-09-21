@@ -35,9 +35,9 @@ class FCSpectralMNet(BaseN.BaseNetwork):
         
         x = input_shape
         self.model = nn.Sequential(BaseN.Flatten(),
-                                   nn.Linear(np.prod(x), 512),nn.Softplus(),
-                                   nn.Linear(512,256),nn.Softplus(),
-                                   nn.Linear(256,256),nn.Tanh(),
+                                   nn.Linear(np.prod(x), 512),nn.ReLU(),
+                                   nn.Linear(512,256),nn.Tanh(),
+                                   nn.Linear(256,256),
                                    BaseN.EigenLayer(256,self.output_shape[0]))
         self.compile()
 class FCNetQ(BaseN.BaseNetwork):
