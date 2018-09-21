@@ -60,3 +60,5 @@ target/
 clustering/checks/
 
 clustering/logs/
+
+plays/

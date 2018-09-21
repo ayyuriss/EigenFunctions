@@ -40,7 +40,7 @@ class SpectralSpin(BaseSpinet):
         # Trust Region Part
         ray_seq_grad = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
         grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
-        step_dir = U.conjugate_gradient(self.Fvp(grsmn_grad),-ray_seq_grad,cg_iters=self.cg_iter)
+        step_dir,tol = U.conjugate_gradient(self.Fvp(grsmn_grad),-ray_seq_grad,cg_iters=self.cg_iter)
         shs = .5*step_dir.dot(self.Fvp(grsmn_grad)(step_dir))
         lm = (shs/self.max_grsmn).sqrt()
         full_step = step_dir/lm
@@ -52,7 +52,7 @@ class SpectralSpin(BaseSpinet):
         theta0 = self.network.flaten.get()
         
         
-        
+        self.logger.log("CG tol",tol)
         self.logger.log("Seq Rayleigh",old_seq_ray)
         self.logger.log("Grsmn Dist Old",grass_distance)
         self.logger.log("Rayleigh",old_ray)
@@ -64,7 +64,7 @@ class SpectralSpin(BaseSpinet):
 #        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
         
         
-        func = self.ls_func(X,Lap,theta0)
+        func = self.ls_func(X,Lap)
         coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)
         
         fullstep_seq_ray.mul_(coef)

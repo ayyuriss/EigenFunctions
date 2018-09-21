@@ -26,7 +26,7 @@ env = EnvWrapper(GRID(grid_size=grid_size,max_time= 5000,stochastic = True, squa
 
 action_set = [0,1,2,3]
 
-spin = Spin(input_shape, k, network=N.FCConvNetBias, lr=1.0, chol_alpha=1e-3,
+spin = Spin(input_shape, k, network=N.FCConvNetBias, lr=1e-2, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=game)
 
 builder = E.GraphBuilder(env,action_set,batch_size)

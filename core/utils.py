@@ -140,6 +140,6 @@ def conjugate_gradient(Avp, b, cg_iters=10, residual_tol=1e-6):
         rdotr = new_rdotr
         if rdotr < residual_tol:
             break
-    return x
+    return x,rdotr
 
 
