@@ -11,7 +11,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 
 print(Spin.name,Spin.info)
-model = "MNISTF"
+model = "MNISTFS"
 
 print("Loading Data")
 data, labels = pkl.gdepicklize("./../../datasets/mnist_all.pkl.gz")
@@ -40,14 +40,14 @@ n = len(data_train)
 """ Network """
 #############################
 print("Creating network")
-spin = Spin(input_shape, k, network=N.FCSpectralMNet, lr=1.0, chol_alpha=1e-3,
+spin = Spin(input_shape, k, network=N.FCSpectralMNet, lr=1.0, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 
 """ Training """
 #############################
 from spinets.spintrainer import SpinTrainer
-trainer = SpinTrainer(spin, reduce_ratio=0.5,best_interval=15)
+trainer = SpinTrainer(spin, reduce_ratio=0.8,best_interval=15)
 d_learner = C.DistanceLearner(n,nearest,2048)
 i = 0
 cluster_freq = 2*k
@@ -61,12 +61,22 @@ while True:
     Lap = U.laplacian(U.torchify(W))
     err = trainer.train(X,Lap)
     
-    if i>5:
+    if not i%5:
         spin.save("./checks/"+model)
         V_pred = U.get(spin(U.torchify(data_test)))
         for l in [10,11,12,13,14,15,18,19,20]:
             spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
-        i = 0
+
+    if i > 30:
+        D = []
+        step = 10000
+        for i in range(0,n,step):
+            D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)]))))
+        D = np.concatenate(D,axis=0)        
+        for l in range(4,k):
+            spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+        i = 1
+        
 
 
 

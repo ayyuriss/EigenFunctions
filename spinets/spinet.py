@@ -5,7 +5,7 @@ def spincholesky(minispinet):
     class SpinCholesky(minispinet):
         name = "Cholesky"+minispinet.name
         info = "Cholesky and, " + minispinet.info
-        def __init__(self,input_shape, spectral_dim, network=N.ConvNet, chol_alpha=5e-3,n_blocks=2,
+        def __init__(self,input_shape, spectral_dim, network=N.ConvNet, chol_alpha=5e-3,n_blocks=1,
                  lr=1e-2,ls_alpha = 0.5, ls_beta=0.5, ls_maxiter=50, log_freq=10,log_file=""):
             super(SpinCholesky,self).__init__(input_shape, spectral_dim, network,lr,
                                               ls_alpha, ls_beta, ls_maxiter, log_freq,log_file)

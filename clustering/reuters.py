@@ -13,7 +13,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersF2"
+model = "reutersF3"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)
@@ -46,7 +46,7 @@ n = data_train.shape[0]
 Training
 """
 ####################################
-spin = Spin(input_shape, k, network=N.FCSpectralNet, lr=1.0, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralNet, lr=1e-2, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 
@@ -60,19 +60,26 @@ while True:
     i+=1
     batch = np.random.choice(range(n), batch_size, replace = False)
     X = U.torchify(data_train[batch].toarray())
-    W = d_learner.submit(data_train[batch],batch).toarray()
+    W = d_learner.submit(data_train[batch].toarray(),batch).toarray()
     #Lap = U.torchify(C.build_laplacian(X,nearest).toarray())
     Lap = U.laplacian(U.torchify(W))
     err = trainer.train(X,Lap)
     
-    if i>5:
+    if not i % 5:
         spin.save("./checks/"+model)
         V_pred = U.get(spin(U.torchify(data_test.toarray())))
         #for l in [4,5,6,7,8,9]:
-        for l in range(4,10):
+        for l in range(4,k):
             spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
-        i = 0
-
+    if i > 30:
+        D = []
+        step = 10000
+        for i in range(0,n,step):
+            D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)].toarray()))))
+        D = np.concatenate(D,axis=0)        
+        for l in range(4,k):
+            spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+        i = 1
 
 
 D = []
@@ -81,6 +88,10 @@ for i in range(0,n,step):
     D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)].toarray()))))
 D = np.concatenate(D,axis=0)
 l = 4
+
+for l in range(4,k):
+    spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+            
 acc = C.munkres_test(D[:,1:l+1],labels_train)
 
 
