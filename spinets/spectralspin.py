@@ -1,12 +1,10 @@
 import core.utils as U
 import networks.networks as N
 from base.basespinet import BaseSpinet
-
+# Changed
 class SpectralSpin(BaseSpinet):
-
     info = "sequential_rayleigh with double LS search"
     name = "SpectralSpin"
-
     def __init__(self, input_shape, spectral_dim, network=N.ConvNet, lr=1e-2,
                  ls_alpha = 0.5, ls_beta=0.5, ls_maxiter=20, log_freq=10,log_file=""):
         super(SpectralSpin,self).__init__(input_shape, spectral_dim, network, lr,
@@ -68,29 +66,6 @@ class SpectralSpin(BaseSpinet):
         expected_ray.mul_(coef)
         self.network.flaten.set(theta0+fullstep_seq_ray)
 
-        """
-        Y = self.forward_(X)
-        ray_seq_grad = self.network.flaten.flatgrad(
-                            U.sequential_rayleigh(Y,Lap)+ self.l1_coef*self.network.l1_weight(),retain=True)
-
-        normed_seq_grad = ray_seq_grad/max(U.EPS,ray_seq_grad.norm())
-
-        grass_distance_n = U.grassmann_distance(Y)
-        grasmn_grad = self.network.flaten.flatgrad(grass_distance_n)
-
-        normed_grsmn_grad = grasmn_grad/max(U.EPS,grasmn_grad.norm())
-        proj_grsmn_grad = normed_grsmn_grad - normed_seq_grad.dot(normed_grsmn_grad)*normed_seq_grad
-        #proj_grsmn_grad = proj_grsmn_grad
-        fullstep_grass = -proj_grsmn_grad
-        
-        # Line search
-
-        #expected_grass = -fullstep_grass.dot(grasmn_grad)
-        #theta0 = self.network.flaten.get()
-        func = self.cs_func(X,Lap)
-        t0 = U.double_linesearch(func, theta0, fullstep_grass, fullstep_seq_ray, expected_ray, self.grmn_ratio*self.ls_alpha, 0.1 , 15)
-        self.network.flaten.set(theta0+fullstep_grass*t0+fullstep_seq_ray)
-        """
         Y2 = self.forward_(X).detach()
         # Metrics
         new_ray = U.rayleigh(Y2,Lap)
