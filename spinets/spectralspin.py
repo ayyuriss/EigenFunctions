@@ -50,7 +50,7 @@ class SpectralSpin(BaseSpinet):
         expected_ray = -fullstep_seq_ray.dot(ray_seq_grad)
         
         theta0 = self.network.flaten.get()
-        func = self.cs_func(X,Lap,theta0)
+        
         
         
         self.logger.log("Seq Rayleigh",old_seq_ray)
@@ -59,9 +59,14 @@ class SpectralSpin(BaseSpinet):
         self.logger.log("Seq Grad norm",fullstep_seq_ray.norm())
         self.logger.log("L1 wieghts before",theta0.abs().mean())
         self.logger.log("Expected Ray",expected_ray)
-        constraint = lambda x: x<1.5*self.max_grsmn
+#        func = self.cs_func(X,Lap,theta0)
+#        constraint = lambda x: x<1.5*self.max_grsmn
+#        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
         
-        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+        
+        func = self.ls_func(X,Lap,theta0)
+        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+        
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
         self.network.flaten.set(theta0+fullstep_seq_ray)
