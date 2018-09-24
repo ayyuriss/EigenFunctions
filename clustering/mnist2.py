@@ -4,14 +4,13 @@ import core.utils as U
 import core.picklize as pkl
 import core.clustering as C
 import networks.networks as N
-import scipy.sparse as SP
 import numpy as np
 
 import spinets.spins as S
 Spin=S.SpectralSpinet
 
 print(Spin.name,Spin.info)
-model = "MNISTF9"
+model = "MNISTF9X"
 
 print("Loading Data")
 data, labels = pkl.gdepicklize("./../../datasets/mnist_all.pkl.gz")
@@ -19,7 +18,7 @@ size = 28
 input_shape = (1,size,size)
 data = data.reshape((-1,)+input_shape)
 nearest = 5
-k = 21
+k = 32
 batch_size = 1024
 
 
@@ -40,7 +39,7 @@ n = len(data_train)
 """ Network """
 #############################
 print("Creating network")
-spin = Spin(input_shape, k, network=N.FCSpectralMNet, lr=1.0, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralNet, lr=1e-2, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 
@@ -61,22 +60,26 @@ while True:
     Lap = U.laplacian(U.torchify(W))
     err = trainer.train(X,Lap)
     
-    if not i%5:
+    if not i % 5:
         spin.save("./checks/"+model)
         V_pred = U.get(spin(U.torchify(data_test)))
-        for l in range(10,k):
-            spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
-
+        #for l in [4,5,6,7,8,9]:
+        for l in range(4,k):
+            ac,nmi = C.munkres_test(V_pred[:,1:l+1],labels_test)
+            spin.logger.log("Acc %i"%l, ac)
+            spin.logger.log("NMI %i"%l, nmi)
     if i > 30:
         D = []
         step = 10000
         for i in range(0,n,step):
             D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)]))))
         D = np.concatenate(D,axis=0)        
-        for l in range(10,k):
-            spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+        for l in range(4,k):
+            ac,nmi = C.munkres_test(D[:,1:l+1],labels_train)
+            spin.logger.log("Acc Train %i"%l, ac)
+            spin.logger.log("NMI Train %i"%l, nmi)
         i = 1
-        
+
 
 
 

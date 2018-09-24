@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 import core.utils as U
 import core.console as C
+import os
 
 class BaseNetwork(torch.nn.Module):
     """
@@ -76,6 +77,10 @@ class BaseNetwork(torch.nn.Module):
         except:
             C.warning("Couldn't load %s"%fname)
     def save(self,fname):
+        dirt = os.path.dirname(os.path.abspath(fname))
+        if not os.path.exists(dirt):
+            os.makedirs(dirt)
+            
         print("Saving to %s.%s"%(fname,self.name))
         dic = super(BaseNetwork,self).state_dict()
         torch.save(dic, "%s.%s"%(fname,self.name))

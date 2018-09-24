@@ -4,7 +4,6 @@ import core.utils as U
 from base.logger import Logger
 import networks.networks as N
 
-
 class BaseSpinet(torch.nn.Module):
     info = "BaseSpinet Model"
     name = "BaseSpinet"
