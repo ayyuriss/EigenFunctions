@@ -110,5 +110,6 @@ def munkres_test(Vects, true_labels,n_clusters=None):
     mat = pred_hot.T.dot(true_hot)
     permute = np.array(m.compute(-mat))[:,1]
     ac = np.mean(permute[clusters]==true_labels)
-    print("Accuracy:",ac,"NMI:",sklearn.metrics.normalized_mutual_info_score(clusters,true_labels))
-    return ac
+    nmi = sklearn.metrics.normalized_mutual_info_score(clusters,true_labels)
+    print("Accuracy:",ac,"NMI:",nmi)
+    return ac,nmi

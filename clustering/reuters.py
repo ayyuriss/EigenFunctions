@@ -13,12 +13,12 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersF8"
+model = "reutersFX"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)
 nearest = 10
-k = 16
+k = 32
 batch_size = 2048
 
 
@@ -46,7 +46,7 @@ n = data_train.shape[0]
 Training
 """
 ####################################
-spin = Spin(input_shape, k, network=N.FCSpectralMNet, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralNet, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 
@@ -70,7 +70,9 @@ while True:
         V_pred = U.get(spin(U.torchify(data_test.toarray())))
         #for l in [4,5,6,7,8,9]:
         for l in range(4,k):
-            spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
+            ac,nmi = C.munkres_test(V_pred[:,1:l+1],labels_test)
+            spin.logger.log("Acc %i"%l, ac)
+            spin.logger.log("NMI %i"%l, nmi)
     if i > 30:
         D = []
         step = 10000
@@ -78,7 +80,9 @@ while True:
             D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)].toarray()))))
         D = np.concatenate(D,axis=0)        
         for l in range(4,k):
-            spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+            ac,nmi = C.munkres_test(D[:,1:l+1],labels_train)
+            spin.logger.log("Acc Train %i"%l, ac)
+            spin.logger.log("NMI Train %i"%l, nmi)
         i = 1
 
 
@@ -88,7 +92,7 @@ while True:
 
 
 
-
+"""
 
 
 ################################
@@ -121,7 +125,7 @@ P.plt.plot(data["Seq Rayleigh"].dropna())
 P.plt.figure()
 P.plt.plot(data["Rayleigh"].dropna())
 P.plt.plot(data["Spin lr"].dropna())
-"""    i+=1
+    i+=1
 7102
     batch = np.random.choice(range(n), batch_size, replace = False)
     X = U.torchify(data_train[batch].toarray())
