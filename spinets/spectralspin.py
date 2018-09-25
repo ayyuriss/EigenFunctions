@@ -10,7 +10,7 @@ class SpectralSpin(BaseSpinet):
         super(SpectralSpin,self).__init__(input_shape, spectral_dim, network, lr,
                  ls_alpha, ls_beta, ls_maxiter, log_freq,log_file)
 
-        self.max_grsmn = 1e-4
+        self.max_grsmn = 1e-6
         self.cg_iter = 10
         self.cg_damping= 1e-5
         self.l1_coef = 1.0
