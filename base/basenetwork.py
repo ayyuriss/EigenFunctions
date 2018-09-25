@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy as np
 import core.utils as U
 import core.console as C
-import os
 
 class BaseNetwork(torch.nn.Module):
     """
@@ -77,10 +76,6 @@ class BaseNetwork(torch.nn.Module):
         except:
             C.warning("Couldn't load %s"%fname)
     def save(self,fname):
-        dirt = os.path.dirname(os.path.abspath(fname))
-        if not os.path.exists(dirt):
-            os.makedirs(dirt)
-            
         print("Saving to %s.%s"%(fname,self.name))
         dic = super(BaseNetwork,self).state_dict()
         torch.save(dic, "%s.%s"%(fname,self.name))
@@ -202,16 +197,12 @@ class ResNetBlock(nn.Module):
     def forward(self, x):
         return self.conv1(x) + self.conv2(x)
     
-class EigenLayer(nn.Linear):
+class EigenLayer(nn.Module):
     """
         Taking the output and adding 1 as the first columns
     """
-    def __init__(self, in_features, out_features, bias=True):
-        super(EigenLayer, self).__init__(in_features, out_features-1, bias)
-
     def forward(self,input):
-        output = nn.functional.linear(input, self.weight, self.bias)
-        return torch.cat([U.torchify(np.ones((input.shape[0],1))),output],dim=-1)
+        return torch.cat([U.torchify(np.ones((input.shape[0],1))),input],dim=-1)
 
 
 def flatten(x):

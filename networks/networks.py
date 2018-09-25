@@ -16,17 +16,18 @@ class FCNet(BaseN.BaseNetwork):
                                    BaseN.EigenLayer(256,self.output_shape[0]))
         self.compile()
 
-class FCSpectralNet(BaseN.BaseNetwork):
-    name ="FCSpectralNet"
+class FCSpectralRNet(BaseN.BaseNetwork):
+    name ="FCSpectralRNet"
     def __init__(self,input_shape,output_shape,owner_name=""):
-        super(FCSpectralNet,self).__init__(input_shape,output_shape,owner_name)
+        super(FCSpectralRNet,self).__init__(input_shape,output_shape,owner_name)
         
         x = input_shape
         self.model = nn.Sequential(BaseN.Flatten(),
-                                   nn.Linear(np.prod(x), 1024),nn.Softplus(),
+                                   nn.Linear(np.prod(x), 1024),BaseN.AdaptiveTanh(),
                                    nn.Linear(1024,1024),BaseN.AdaptiveTanh(),
-                                   nn.Linear(1024,512),
-                                   BaseN.EigenLayer(512,self.output_shape[0]))
+                                   nn.Linear(1024,512),BaseN.AdaptiveTanh(),
+                                   nn.Linear(512,self.output_shape[0]-1),
+                                   BaseN.EigenLayer())
         self.compile()
 class FCSpectralMNet(BaseN.BaseNetwork):
     name ="FCSpectralMNet"
@@ -35,10 +36,12 @@ class FCSpectralMNet(BaseN.BaseNetwork):
         
         x = input_shape
         self.model = nn.Sequential(BaseN.Flatten(),
-                                   nn.Linear(np.prod(x), 512),nn.ReLU(),
-                                   nn.Linear(512,256),nn.Tanh(),
-                                   nn.Linear(256,256),
-                                   BaseN.EigenLayer(256,self.output_shape[0]))
+                                   nn.Linear(np.prod(x), 1024),nn.Softplus(),
+                                   nn.Linear(1024,1024),nn.Softplus(),
+                                   nn.Linear(1024,512),nn.Softplus(),
+                                   nn.Linear(512,64),BaseN.AdaptiveTanh(64),
+                                   nn.Linear(64,self.output_shape[0]-1),
+                                   BaseN.EigenLayer())
         self.compile()
 class FCNetQ(BaseN.BaseNetwork):
     name ="FCNetQ"

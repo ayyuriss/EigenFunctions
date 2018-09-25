@@ -24,10 +24,11 @@ def spincholesky(minispinet):
         def forward_(self,x):
             return self.forward(x)/x.shape[0]**.5
         def train(self, X, Lap):
+
+            x = super(SpinCholesky,self).train(X, Lap)
             grss1 = U.grassmann_distance(self.forward_(X).detach())
             self.update_cholesky(X)
             grss2 = U.grassmann_distance(self.forward_(X).detach())
-            x = super(SpinCholesky,self).train(X, Lap)
             self.logger.log("Chol lr",self.cholesky.model[0].alpha)
             self.logger.log("Grsmn b4 Cholesky",grss1)
             self.logger.log("Grsmn after Cholesky",grss2)
