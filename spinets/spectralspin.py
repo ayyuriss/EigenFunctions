@@ -45,7 +45,7 @@ class SpectralSpin(BaseSpinet):
 
         self.normalize = max(self.normalize, U.get(ray_seq_grad.norm()))
         
-        fullstep_seq_ray = self.lr*full_step*self.normalize/ray_seq_grad.norm()
+        fullstep_seq_ray = self.lr*full_step*ray_seq_grad.norm()/self.normalize
         expected_ray = -fullstep_seq_ray.dot(ray_seq_grad)
         
 
