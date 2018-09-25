@@ -13,7 +13,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersFX"
+model = "reutersFZ"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)

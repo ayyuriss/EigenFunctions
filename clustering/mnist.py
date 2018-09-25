@@ -47,7 +47,7 @@ spin.load("./checks/"+model)
 #############################
 from spinets.spintrainer import SpinTrainer
 trainer = SpinTrainer(spin, reduce_ratio=0.8,best_interval=15)
-d_learner = C.DistanceLearner(n,nearest,2048)
+d_learner = C.DistanceLearner(n,nearest,256)
 i = 0
 cluster_freq = 2*k
 print("Training Starts")
