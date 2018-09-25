@@ -10,7 +10,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 
 print(Spin.name,Spin.info)
-model = "MNISTF9X"
+model = "MNISTF9Z"
 
 print("Loading Data")
 data, labels = pkl.gdepicklize("./../../datasets/mnist_all.pkl.gz")
