@@ -66,12 +66,13 @@ class SpectralSpin(BaseSpinet):
         self.logger.log("Expected Ray",expected_ray)
 
 
-#        func = self.cs_func(X,Lap,theta0)
-#        constraint = lambda x: x<=self.max_grsmn
+        func = self.cs_func(X,Lap,theta0)
+        constraint = lambda x: x<=self.max_grsmn
 #        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
-        func = self.ls_func(X,Lap)
-        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
-       
+        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
+#        func = self.ls_func(X,Lap)
+#        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
+#       
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
         self.network.flaten.set(theta0+self.lr*fullstep_seq_ray)
