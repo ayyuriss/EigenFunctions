@@ -7,7 +7,7 @@ import networks.networks as N
 import numpy as np
 
 import spinets.spins as S
-Spin=S.SpectralSpinet
+Spin=S.SpectralSpinetS
 
 print(Spin.name,Spin.info)
 model = "MNISTF9X"
@@ -64,7 +64,7 @@ while True:
         spin.save("./checks/"+model)
         V_pred = U.get(spin(U.torchify(data_test)))
         #for l in [4,5,6,7,8,9]:
-        for l in range(4,k):
+        for l in range(10,k):
             ac,nmi = C.munkres_test(V_pred[:,1:l+1],labels_test)
             spin.logger.log("Acc %i"%l, ac)
             spin.logger.log("NMI %i"%l, nmi)
@@ -74,37 +74,8 @@ while True:
         for i in range(0,n,step):
             D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)]))))
         D = np.concatenate(D,axis=0)        
-        for l in range(4,k):
+        for l in range(10,k):
             ac,nmi = C.munkres_test(D[:,1:l+1],labels_train)
             spin.logger.log("Acc Train %i"%l, ac)
             spin.logger.log("NMI Train %i"%l, nmi)
         i = 1
-
-
-
-
-
-"""
-D = []
-step = 10000
-for i in range(0,n,step):
-    D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)]))))
-D = np.concatenate(D,axis=0)
-for l in [10,11,12,13,14,15,18,19,20]:
-     print("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
-"""
-    #ac = C.munkres_test(V_pred[:,1:],labels_test)
-#    if not i%cluster_freq:
-#        V_pred = U.get(spin(U.torchify(data_test)))
-#        pred_F = U.rayleigh_np(V_pred,L_test)
-#        print("\n\t""%3.6f"%actual_F_test, "%3.6f"%pred_F)
-#        spin.save("./checks/"+model)
-        #C.munkres_acc(V_pred,labels_test,1,20)
-#        ac = C.munkres_test(V_pred[:,1:],labels_test)
-#        spin.logger.log("Accuracy",ac)
-#        spin.logger.log("S Sparsity",len(d_learner.D.nonzero()[0]))
-#        spin.logger.log("Acc 10", C.munkres_test(V_pred[:,1:11],labels_test))
-#        spin.logger.log("Acc 15", C.munkres_test(V_pred[:,1:16],labels_test))
-#        spin.logger.log("Acc 19", C.munkres_test(V_pred[:,1:],labels_test))
-        #spin.logger.log()
-#        i = 0
