@@ -43,6 +43,25 @@ class FCSpectralMNet(BaseN.BaseNetwork):
                                    nn.Linear(64,self.output_shape[0]-1),
                                    BaseN.EigenLayer())
         self.compile()
+
+class CVSpectralMNet(BaseN.BaseNetwork):
+    name ="CVSpectralMNet"
+    def __init__(self,input_shape,output_shape,owner_name=""):
+        super(CVSpectralMNet,self).__init__(input_shape,output_shape,owner_name)
+    
+        self.conv = [nn.Sequential(BaseN.conv3_2(input_shape[0], 4),BaseN.AdaptiveTanh(),
+                                                 BaseN.conv3_2(4, 8))]
+    
+        x = BaseN.output_shape(self.conv[0],input_shape)
+        self.model = nn.Sequential(self.conv[0],
+                                   BaseN.Flatten(),
+                                   nn.Linear(np.prod(x), 1024),BaseN.AdaptiveTanh(),
+                                   nn.Linear(1024,1024),BaseN.AdaptiveTanh(),
+                                   nn.Linear(1024,512),BaseN.AdaptiveTanh(),
+                                   nn.Linear(512,self.output_shape[0]-1),
+                                   BaseN.EigenLayer())
+        self.compile()
+        
 class FCNetQ(BaseN.BaseNetwork):
     name ="FCNetQ"
     def __init__(self,input_shape,output_shape,owner_name=""):

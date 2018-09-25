@@ -46,7 +46,7 @@ n = data_train.shape[0]
 Training
 """
 ####################################
-spin = Spin(input_shape, k, network=N.FCSpectralRNet, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralRNet, chol_alpha=1.0,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
 spin.load("./checks/"+model)
 

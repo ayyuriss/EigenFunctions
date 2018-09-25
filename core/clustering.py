@@ -98,9 +98,10 @@ def munkres_test(Vects, true_labels,n_clusters=None):
     m = Munkres()
     scaler = StandardScaler()
     V = scaler.fit_transform(Vects)
+    #V = Vects
     if n_clusters is None:
         n_clusters = n_l
-    print("Evaluating Clustering, clusters:",n_clusters)
+    print("Evaluating Clustering, clusters:",n_clusters,",vectors:",Vects.shape[1])
     V = (V.T/np.linalg.norm(V,axis=1)).T
     km = KMeans(n_clusters=n_clusters)
     km = KMeans(n_clusters=n_clusters)
