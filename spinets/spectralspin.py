@@ -22,9 +22,8 @@ class SpectralSpin(BaseSpinet):
         
         def func(theta):
             self.network.flaten.set(theta)
-            y = self.forward_(X).detach() 
-            yy = self.network.forward_(X).detach()
-            return U.sequential_rayleigh(y,Lap), (yy.t().mm(yy)-Y0.t().mm(Y0).detach()).norm()**2
+            y = self.forward_(X).detach()
+            return U.sequential_rayleigh(y,Lap), (y.t().mm(y)-Y0.t().mm(Y0).detach()).norm()**2
         return func
     
     def learn(self,X,Lap):
