@@ -10,7 +10,7 @@ class SpectralSpin(BaseSpinet):
         super(SpectralSpin,self).__init__(input_shape, spectral_dim, network, lr,
                  ls_alpha, ls_beta, ls_maxiter, log_freq,log_file)
 
-        self.max_grsmn = 1e-6
+        self.max_grsmn = 1e-4
         self.cg_iter = 10
         self.cg_damping= 1e-5
         self.l1_coef = 1.0
@@ -68,8 +68,8 @@ class SpectralSpin(BaseSpinet):
 
         func = self.cs_func(X,Lap,theta0)
         constraint = lambda x: x<=self.max_grsmn
-#        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
-        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
+        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+#        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
 #        func = self.ls_func(X,Lap)
 #        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
 #       

@@ -86,7 +86,7 @@ class BaseNetwork(torch.nn.Module):
         self.flaten.set(net2.flaten.get())
     def l1_weight(self):
         res = 0
-        l = nn.L1Loss(size_average=False)
+        l = nn.L1Loss()
         for p in self.parameters():
             res += l(p,(0.0*p).detach())
         return res/self.flaten.total_size
