@@ -13,12 +13,12 @@ class SpectralSpin(BaseSpinet):
         self.max_grsmn = 1e-3
         self.cg_iter = 10
         self.cg_damping= 1e-5
-        self.l1_coef = 1e-3
+        self.l1_coef = 1.0
         self.normalize = 1.0
 
     def cs_func(self,X,Lap,theta0):
         self.network.flaten.set(theta0)
-        Y0 = self.network.forward_(X).detach()
+        Y0 = self.forward_(X).detach()
         
         def func(theta):
             self.network.flaten.set(theta)
@@ -30,14 +30,13 @@ class SpectralSpin(BaseSpinet):
     def learn(self,X,Lap):
 
         Y = self.forward_(X)
-        YY = self.network.forward_(X)
         old_ray = U.rayleigh(Y,Lap)
         old_seq_ray = U.sequential_rayleigh(Y,Lap)
         grass_distance = U.grassmann_distance(Y)
 
         # Trust Region Part
         ray_seq_grad = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
-        grsmn_grad = self.network.flaten.flatgrad((YY.t().mm(YY)-YY.t().mm(YY).detach()).norm()**2,retain=True,create=True)
+        grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
         step_dir, tol = U.conjugate_gradient(self.Fvp(grsmn_grad),-ray_seq_grad,cg_iters=self.cg_iter)
         shs = .5*step_dir.dot(self.Fvp(grsmn_grad)(step_dir))
         lm = (shs/self.max_grsmn).sqrt()
@@ -73,12 +72,11 @@ class SpectralSpin(BaseSpinet):
         self.network.flaten.set(theta0+fullstep_seq_ray)
 
         Y2 = self.forward_(X).detach()
-        YY2 = self.network.forward_(X).detach()
         # Metrics
         new_ray = U.rayleigh(Y2,Lap)
         new_seq_ray = U.sequential_rayleigh(Y2,Lap)
         new_grass = U.grassmann_distance(Y2)
-        div = (YY.t().mm(YY)-YY2.t().mm(YY2).detach()).norm()**2
+        div = (Y2.t().mm(Y2)-Y.t().mm(Y)).norm()**2
         # Log metrics Improve
         self.logger.log("Grsmn Div",div)
         self.logger.log("Seq Rayleigh Improve",old_seq_ray-new_seq_ray)
