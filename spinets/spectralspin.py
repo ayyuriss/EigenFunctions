@@ -10,7 +10,7 @@ class SpectralSpin(BaseSpinet):
         super(SpectralSpin,self).__init__(input_shape, spectral_dim, network, lr,
                  ls_alpha, ls_beta, ls_maxiter, log_freq,log_file)
 
-        self.max_grsmn = 1e-5
+        self.max_grsmn = 1e-6
         self.cg_iter = 10
         self.cg_damping= 1e-5
         self.l1_coef = 1.0
@@ -25,7 +25,12 @@ class SpectralSpin(BaseSpinet):
             y = self.forward_(X).detach()
             return U.sequential_rayleigh(y,Lap), (y.t().mm(y)-Y0.t().mm(Y0).detach()).norm()**2
         return func
-    
+    def ls_func(self,X,Lap):
+        def func(theta):
+            self.network.flaten.set(theta)
+            return U.sequential_rayleigh(self.forward_(X).detach(),Lap)
+        return func
+ 
     def learn(self,X,Lap):
 
         Y = self.forward_(X)
@@ -43,7 +48,7 @@ class SpectralSpin(BaseSpinet):
 
         self.normalize = max(self.normalize, U.get(ray_seq_grad.norm()))
         
-        fullstep_seq_ray = self.lr*full_step*ray_seq_grad.norm()/self.normalize
+        fullstep_seq_ray = full_step*ray_seq_grad.norm()/self.normalize
         expected_ray = -fullstep_seq_ray.dot(ray_seq_grad)
         
 
@@ -61,14 +66,15 @@ class SpectralSpin(BaseSpinet):
         self.logger.log("Expected Ray",expected_ray)
 
 
-        func = self.cs_func(X,Lap,theta0)
-        constraint = lambda x: x<=self.max_grsmn
-        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
-        
+#        func = self.cs_func(X,Lap,theta0)
+#        constraint = lambda x: x<=self.max_grsmn
+#        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+        func = self.ls_func(X,Lap)
+        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
        
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
-        self.network.flaten.set(theta0+fullstep_seq_ray)
+        self.network.flaten.set(theta0+self.lr*fullstep_seq_ray)
 
         Y2 = self.forward_(X).detach()
         # Metrics

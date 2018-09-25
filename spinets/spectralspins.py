@@ -57,7 +57,8 @@ class SpectralSpinS(BaseSpinet):
 
         func = self.cs_func(X,Lap,theta0)
         constraint = lambda x: x<=self.max_grsmn
-        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+        #coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
         
         
         

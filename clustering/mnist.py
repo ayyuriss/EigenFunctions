@@ -10,7 +10,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 
 print(Spin.name,Spin.info)
-model = "MNISTFR3"
+model = "MNISTFR4"
 
 print("Loading Data")
 data, labels = pkl.gdepicklize("./../../datasets/mnist_all.pkl.gz")
@@ -46,7 +46,7 @@ spin.load("./checks/"+model)
 """ Training """
 #############################
 from spinets.spintrainer import SpinTrainer
-trainer = SpinTrainer(spin, reduce_ratio=0.8,best_interval=15)
+trainer = SpinTrainer(spin, reduce_ratio=0.1,best_interval=10)
 d_learner = C.DistanceLearner(n,nearest,1024)
 i = 0
 cluster_freq = 2*k

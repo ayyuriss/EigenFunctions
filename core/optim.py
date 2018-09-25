@@ -53,6 +53,18 @@ def constrained_linesearch(func, x0, grad, expected, constraint, alpha = 0.5, be
         coef.mul_(beta)
     return torch.tensor(0.0)
 
+def simple_constrained_linesearch(func, x0, grad, constraint, beta=.5, max_iter=25):
+    f0,_ = func(x0)
+    coef = torch.tensor(1.0)
+    for _ in range(max_iter):
+        f1,c1 = func(x0+grad*coef)
+        #print(c1)
+        if f0-f1 > 0 and constraint(c1):
+            return coef
+        coef.mul_(beta)
+    return torch.tensor(0.0)
+
+
 def double_circlesearch(func, x0, grad1, grad2, expected, 
                  alpha = 0.5, beta=.5, max_iter=25):
     f01,f02 = func(x0)
