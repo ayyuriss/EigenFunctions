@@ -259,8 +259,9 @@ class FCNetSimple(BaseN.BaseNetwork):
         
         x = input_shape
         self.model = nn.Sequential(BaseN.Flatten(),
-                                   nn.Linear(np.prod(x), 1024),nn.Softplus(),
-                                   nn.Linear(1024,512),
-                                   nn.Linear(512,256),nn.Tanh(),
-                                   nn.Linear(256,self.output_shape[0]))
+                                   nn.Linear(np.prod(x), 1024),nn.ReLU(),
+                                   nn.Linear(1024,1024),nn.ReLU(),
+                                   nn.Linear(1024,512),nn.Tanh(),
+                                   nn.Linear(512,self.output_shape[0]-1),
+                                   BaseN.EigenLayer())
         self.compile()

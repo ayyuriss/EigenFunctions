@@ -12,18 +12,19 @@ class SpectralSpin(BaseSpinet):
 
         self.max_grsmn = 1e-6
         self.cg_iter = 10
-        self.cg_damping= 1e-5
+        self.cg_damping= 1e-7
         self.l1_coef = 1.0
         self.normalize = 1.0
 
     def cs_func(self,X,Lap,theta0):
         self.network.flaten.set(theta0)
         Y0 = self.forward_(X).detach()
-        
+        L0 = U.cholesky_inv(Y0.t().mm(Y0))
         def func(theta):
             self.network.flaten.set(theta)
             y = self.forward_(X).detach()
-            return U.sequential_rayleigh(y,Lap), (y.t().mm(y)-Y0.t().mm(Y0).detach()).norm()**2
+            #return U.sequential_rayleigh(y,Lap), (y.t().mm(y)-Y0.t().mm(Y0).detach()).norm()**2
+            return U.sequential_rayleigh(y,Lap), U.grassmann_distance(y.mm(L0.t()))
         return func
     def ls_func(self,X,Lap):
         def func(theta):
@@ -40,7 +41,9 @@ class SpectralSpin(BaseSpinet):
 
         # Trust Region Part
         ray_seq_grad = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
-        grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
+        L = U.cholesky_inv(Y.detach().t().mm(Y.detach()))
+#        grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
+        grsmn_grad = self.network.flaten.flatgrad(U.grassmann_distance(Y.mm(L.t())),retain=True,create=True)
         step_dir, tol = U.conjugate_gradient(self.Fvp(grsmn_grad),-ray_seq_grad,cg_iters=self.cg_iter)
         shs = .5*step_dir.dot(self.Fvp(grsmn_grad)(step_dir))
         lm = (shs/self.max_grsmn).sqrt()
@@ -78,11 +81,13 @@ class SpectralSpin(BaseSpinet):
         self.network.flaten.set(theta0+self.lr*fullstep_seq_ray)
 
         Y2 = self.forward_(X).detach()
+        L2 = U.cholesky_inv(Y2.t().mm(Y2))
         # Metrics
         new_ray = U.rayleigh(Y2,Lap)
         new_seq_ray = U.sequential_rayleigh(Y2,Lap)
         new_grass = U.grassmann_distance(Y2)
-        div = (Y2.t().mm(Y2)-Y.t().mm(Y)).norm()**2
+        #div = (Y2.t().mm(Y2)-Y.t().mm(Y)).norm()**2
+        div =  U.grassmann_distance(Y2.mm(L2.t()))
         # Log metrics Improve
         self.logger.log("Grsmn Div",div)
         self.logger.log("Seq Rayleigh Improve",old_seq_ray-new_seq_ray)
