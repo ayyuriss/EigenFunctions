@@ -51,7 +51,7 @@ class SpectralSpin(BaseSpinet):
 
         self.normalize = max(self.normalize, U.get(ray_seq_grad.norm()))
         
-        fullstep_seq_ray = full_step*ray_seq_grad.norm()/self.normalize
+        fullstep_seq_ray = self.lr*full_step*ray_seq_grad.norm()/self.normalize
         expected_ray = -fullstep_seq_ray.dot(ray_seq_grad)
         
 
@@ -64,19 +64,19 @@ class SpectralSpin(BaseSpinet):
         self.logger.log("Grsmn Dist Old",grass_distance)
         self.logger.log("Rayleigh",old_ray)
         self.logger.log("Seq Grad norm",self.lr*ray_seq_grad.norm())
-        self.logger.log("Seq CG norm",self.lr*fullstep_seq_ray.norm())
+        self.logger.log("Seq CG norm",fullstep_seq_ray.norm())
         self.logger.log("L1 wieghts before",theta0.abs().mean())
-        self.logger.log("Expected Ray",self.lr*expected_ray)
+        self.logger.log("Expected Ray",expected_ray)
 
 
 #        func = self.cs_func(X,Lap,theta0)
 #        constraint = lambda x: x<=self.max_grsmn
 #        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
 #        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
-        #func = self.ls_func(X,Lap)
-        #coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
+        func = self.ls_func(X,Lap)
+        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
 #   
-        coef = self.lr
+        
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
         self.network.flaten.set(theta0+fullstep_seq_ray)
