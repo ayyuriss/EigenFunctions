@@ -41,15 +41,17 @@ n = len(data_train)
 print("Creating network")
 spin = Spin(input_shape, k, network=N.CVSpectralMNet, lr=1.0, chol_alpha=5e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
-spin.load("./checks/"+model)
+
 
 """ Training """
 #############################
 from spinets.spintrainer import SpinTrainer
 trainer = SpinTrainer(spin, reduce_ratio=0.1,best_interval=10)
-d_learner = C.DistanceLearner(n,nearest,1024)
+d_learner = C.DistanceLearner(n,nearest,1024,model)
 i = 0
 cluster_freq = 2*k
+spin.load("./checks/"+model)
+d_learner.load("./checks/")
 print("Training Starts")
 while True:
     i+=1
@@ -62,6 +64,7 @@ while True:
     
     if not i % 5:
         spin.save("./checks/"+model)
+        d_learner.save("./checks/")
         V_pred = U.get(spin(U.torchify(data_test)))
         #for l in [4,5,6,7,8,9]:
         for l in range(10,k):

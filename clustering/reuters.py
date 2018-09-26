@@ -13,7 +13,7 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersFZ"
+model = "reutersFZ2"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)
@@ -46,15 +46,16 @@ n = data_train.shape[0]
 Training
 """
 ####################################
-spin = Spin(input_shape, k, network=N.FCSpectralRNet, chol_alpha=1e-2,
+spin = Spin(input_shape, k, network=N.FCSpectralRNet, lr=1e-4, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
-spin.load("./checks/"+model)
 
 from spinets.spintrainer import SpinTrainer
 trainer = SpinTrainer(spin, reduce_ratio=0.5,best_interval=15)
-d_learner = C.DistanceLearner(n,nearest,5000)
+d_learner = C.DistanceLearner(n,nearest,5000,model)
 i = 0
 cluster_freq = 2*k
+spin.load("./checks/"+model)
+d_learner.load("./checks/")
 print("Starting Training")
 while True:
     i+=1
@@ -67,6 +68,7 @@ while True:
     
     if not i % 5:
         spin.save("./checks/"+model)
+        d_learner.save("./checks/")
         V_pred = U.get(spin(U.torchify(data_test.toarray())))
         #for l in [4,5,6,7,8,9]:
         for l in range(4,k):

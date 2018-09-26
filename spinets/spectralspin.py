@@ -41,9 +41,9 @@ class SpectralSpin(BaseSpinet):
 
         # Trust Region Part
         ray_seq_grad = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
-        L = U.cholesky_inv(Y.detach().t().mm(Y.detach()))
-#        grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
-        grsmn_grad = self.network.flaten.flatgrad(U.grassmann_distance(Y.mm(L.t())),retain=True,create=True)
+        #L = U.cholesky_inv(Y.detach().t().mm(Y.detach()))
+        grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
+        #grsmn_grad = self.network.flaten.flatgrad(U.grassmann_distance(Y.mm(L.t())),retain=True,create=True)
         step_dir, tol = U.conjugate_gradient(self.Fvp(grsmn_grad),-ray_seq_grad,cg_iters=self.cg_iter)
         shs = .5*step_dir.dot(self.Fvp(grsmn_grad)(step_dir))
         lm = (shs/self.max_grsmn).sqrt()
@@ -63,31 +63,32 @@ class SpectralSpin(BaseSpinet):
         self.logger.log("Seq Rayleigh",old_seq_ray)
         self.logger.log("Grsmn Dist Old",grass_distance)
         self.logger.log("Rayleigh",old_ray)
-        self.logger.log("Seq Grad norm",ray_seq_grad.norm())
-        self.logger.log("Seq CG norm",fullstep_seq_ray.norm())
+        self.logger.log("Seq Grad norm",self.lr*ray_seq_grad.norm())
+        self.logger.log("Seq CG norm",self.lr*fullstep_seq_ray.norm())
         self.logger.log("L1 wieghts before",theta0.abs().mean())
-        self.logger.log("Expected Ray",expected_ray)
+        self.logger.log("Expected Ray",self.lr*expected_ray)
 
 
-        func = self.cs_func(X,Lap,theta0)
-        constraint = lambda x: x<=self.max_grsmn
-        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
+#        func = self.cs_func(X,Lap,theta0)
+#        constraint = lambda x: x<=self.max_grsmn
+#        coef =  U.constrained_linesearch(func, theta0, fullstep_seq_ray, expected_ray,constraint, self.ls_alpha, self.ls_beta, self.ls_maxiter)
 #        coef =  U.simple_constrained_linesearch(func, theta0, fullstep_seq_ray, constraint, self.ls_beta, self.ls_maxiter)
-#        func = self.ls_func(X,Lap)
-#        coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
-#       
+        #func = self.ls_func(X,Lap)
+        #coef =  U.linesearch(func, theta0, fullstep_seq_ray, expected_ray, self.ls_alpha, self.ls_beta, self.ls_maxiter)        
+#   
+        coef = self.lr
         fullstep_seq_ray.mul_(coef)
         expected_ray.mul_(coef)
-        self.network.flaten.set(theta0+self.lr*fullstep_seq_ray)
+        self.network.flaten.set(theta0+fullstep_seq_ray)
 
         Y2 = self.forward_(X).detach()
-        L2 = U.cholesky_inv(Y2.t().mm(Y2))
+        #L2 = U.cholesky_inv(Y2.t().mm(Y2))
         # Metrics
         new_ray = U.rayleigh(Y2,Lap)
         new_seq_ray = U.sequential_rayleigh(Y2,Lap)
         new_grass = U.grassmann_distance(Y2)
-        #div = (Y2.t().mm(Y2)-Y.t().mm(Y)).norm()**2
-        div =  U.grassmann_distance(Y2.mm(L2.t()))
+        div = (Y2.t().mm(Y2)-Y.t().mm(Y)).norm()**2
+        #div =  U.grassmann_distance(Y2.mm(L2.t()))
         # Log metrics Improve
         self.logger.log("Grsmn Div",div)
         self.logger.log("Seq Rayleigh Improve",old_seq_ray-new_seq_ray)
