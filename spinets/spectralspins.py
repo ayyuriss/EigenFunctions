@@ -1,6 +1,7 @@
 import core.utils as U
 import networks.networks as N
 from base.basespinet import BaseSpinet
+import torch
 
 class SpectralSpinS(BaseSpinet):
     info = "sequential_rayleigh with double LS search"
@@ -41,7 +42,8 @@ class SpectralSpinS(BaseSpinet):
         grass_distance = U.grassmann_distance(Y)
 
         # Trust Region Part
-        ray_seq_grad = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
+        ray_seq_grad2 = self.network.flaten.flatgrad(old_seq_ray + self.l1_coef*self.network.l1_weight() ,retain=True)
+        ray_seq_grad  = self.gradient(Y,Lap)
         #L = U.cholesky_inv(Y.detach().t().mm(Y.detach()))
         grsmn_grad = self.network.flaten.flatgrad((Y.t().mm(Y)-Y.t().mm(Y).detach()).norm()**2,retain=True,create=True)
         #grsmn_grad = self.network.flaten.flatgrad(U.grassmann_distance(Y.mm(L.t())),retain=True,create=True)
@@ -53,7 +55,7 @@ class SpectralSpinS(BaseSpinet):
         self.normalize = max(self.normalize, U.get(ray_seq_grad.norm()))
         
         fullstep_seq_ray = full_step*ray_seq_grad.norm()/self.normalize
-        expected_ray = -fullstep_seq_ray.dot(ray_seq_grad)
+        expected_ray = -fullstep_seq_ray.dot(ray_seq_grad2)
         
 
         
@@ -109,3 +111,13 @@ class SpectralSpinS(BaseSpinet):
             grad_grad_kl = self.network.flaten.flatgrad(kl_v, retain=True)
             return grad_grad_kl + v*self.cg_damping
         return fisher_product
+    
+    def gradient(self,Y,Lap):
+        H = Y.detach()*0
+        
+        for i in range(Y.shape[1]):
+            H[:,:i+1] += (torch.eye(Y.shape[0]) - Y[:,:i+1].mm(Y[:,:i+1].t())).mm(Lap.mm(Y[:,:i+1]))
+        
+        grad = self.network.flaten.flatgrad(Y.t().mm(H).trace(),retain=True)
+        
+        return grad
