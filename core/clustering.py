@@ -73,7 +73,7 @@ class DistanceLearner(object):
             self.D[batch[i],batch[j]] = W[i,j]
         self.reduce()
         self.sig = np.mean(self.D[self.D.nonzero()].data[0])
-        #W =  self.D[batch][:,batch].copy()
+        W =  self.D[batch][:,batch].copy()
         #W = W.maximum(W.getH())
         W = (W + W.getH())/2
         W.data = np.exp(-W.data**2/self.sig**2)
