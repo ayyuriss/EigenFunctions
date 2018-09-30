@@ -13,12 +13,12 @@ import spinets.spins as S
 Spin=S.SpectralSpinet
 print(Spin.name,"\n",Spin.info)
 print("Loading data")
-model = "reutersF8"
+model = "reutersFZ4"
 
 data, labels = pkl.gdepicklize("./../../datasets/reuters.pkl.gz")
 input_shape = (data.shape[1],)
 nearest = 10
-k = 16
+k = 32
 batch_size = 2048
 
 
@@ -48,13 +48,14 @@ Training
 ####################################
 spin = Spin(input_shape, k, network=N.FCSpectralRNet, lr=1e-2, chol_alpha=1e-2,
                  ls_alpha = 0.5, ls_beta=0.25, ls_maxiter=30, log_freq=k,log_file=model)
-spin.load("./checks/"+model)
 
 from spinets.spintrainer import SpinTrainer
 trainer = SpinTrainer(spin, reduce_ratio=0.5,best_interval=15)
 d_learner = C.DistanceLearner(n,nearest,1024,model)
 i = 0
 cluster_freq = 2*k
+spin.load("./checks/"+model)
+d_learner.load("./checks/")
 print("Starting Training")
 while True:
     i+=1
@@ -67,10 +68,13 @@ while True:
     
     if not i % 5:
         spin.save("./checks/"+model)
+        d_learner.save("./checks/")
         V_pred = U.get(spin(U.torchify(data_test.toarray())))
         #for l in [4,5,6,7,8,9]:
         for l in range(4,k):
-            spin.logger.log("Acc %i"%l, C.munkres_test(V_pred[:,1:l+1],labels_test))
+            ac,nmi = C.munkres_test(V_pred[:,1:l+1],labels_test)
+            spin.logger.log("Acc %i"%l, ac)
+            spin.logger.log("NMI %i"%l, nmi)
     if i > 30:
         D = []
         step = 10000
@@ -78,66 +82,7 @@ while True:
             D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)].toarray()))))
         D = np.concatenate(D,axis=0)        
         for l in range(4,k):
-            spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
+            ac,nmi = C.munkres_test(D[:,1:l+1],labels_train)
+            spin.logger.log("Acc Train %i"%l, ac)
+            spin.logger.log("NMI Train %i"%l, nmi)
         i = 1
-
-
-
-
-
-
-
-
-
-
-
-################################
-D = []
-step = 10000
-for i in range(0,n,step):
-    D.append(U.get(spin(U.torchify(data_train[i:min(i+step,n)].toarray()))))
-D = np.concatenate(D,axis=0)
-l = 4
-
-for l in range(4,k):
-    spin.logger.log("Acc Train %i"%l, C.munkres_test(D[:,1:l+1],labels_train))
-            
-acc = C.munkres_test(D[:,1:l+1],labels_train)
-
-
-
-import core.plots as P
-
-data = spin.logger.load()
-
-P.plt.plot(data["Acc 10"].dropna())
-P.plt.plot(data["Spin lr"].dropna())
-
-
-P.plt.figure()
-P.plt.plot(data["Grsmn Dist Old"].dropna())
-P.plt.figure()
-P.plt.plot(data["Seq Rayleigh"].dropna())
-P.plt.figure()
-P.plt.plot(data["Rayleigh"].dropna())
-P.plt.plot(data["Spin lr"].dropna())
-"""    i+=1
-7102
-    batch = np.random.choice(range(n), batch_size, replace = False)
-    X = U.torchify(data_train[batch].toarray())
-    W = d_learner.submit(data_train[batch],batch).toarray()
-    
-    #Lap = U.torchify(C.build_laplacian(X,nearest).toarray())
-    Lap = U.laplacian(U.torchify(W))
-    err = trainer.train(X,Lap)
-    if not i%cluster_freq :
-        V_pred = U.get(spin(U.torchify(data_test.toarray())))
-#        ray_pred = U.rayleigh_np(V_pred,L_test)
-#        print(ray_test,ray_pred)
-        spin.save("./checks/"+model)
-        print("Testing clustering on test")
-        spin.logger.log("Acc 4", C.munkres_test(V_pred[:,1:5],labels_test))
-        #spin.logger.log("Acc 10", C.munkres_test(V_pred[:,1:11],labels_test))
-        #spin.logger.log("Acc 15", C.munkres_test(V_pred[:,1:16],labels_test))
-        #spin.logger.log("Acc 19", C.munkres_test(V_pred[:,1:],labels_test))
-        i=0"""

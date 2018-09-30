@@ -1,4 +1,5 @@
 import core.utils as U
+import core.picklize as pkl
 import sklearn.metrics
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -58,12 +59,13 @@ def corr_matrix(X,Y,tolx=1e-12,toly=1e-12):
 
 class DistanceLearner(object):
     
-    def __init__(self, n_data,nearest,max_neighbr):
+    def __init__(self, n_data,nearest,max_neighbr,name):
         
         self.D = SP.lil_matrix((n_data,n_data))
         self.near = nearest
         self.max = max_neighbr
         self.sig = 0
+        self.name = name
     def submit(self,X,batch):
         W = kneighbors_graph(X.reshape(X.shape[0],-1), self.near, mode='distance', include_self=True, n_jobs=2)
         idx = W.nonzero()
@@ -77,7 +79,6 @@ class DistanceLearner(object):
         W.data = np.exp(-W.data**2/self.sig**2)
         return W
     def reduce(self):
-        
         idx = self.D.nonzero()
         dic = dict()
         for i,j in zip(*idx):
@@ -91,6 +92,21 @@ class DistanceLearner(object):
                 idx = np.argsort(vals.toarray())[0]
                 for i in idx[self.max:]:
                     self.D[k,v[0][i]] = 0
+    def save(self,path):
+        print("Saving Distance Learner")
+        try:
+            pkl.gpicklize(self.D,path+self.name+"D.pkl.gz")
+        except:
+            import core.console as C
+            C.warning("Couldn't save " + path+self.name+"D.pkl.gz")
+
+    def load(self,path):
+        print("Loading Distance Learner")
+        try :
+            self.D = pkl.gdepicklize(path+self.name+"D.pkl.gz")
+        except:
+            import core.console as C
+            C.warning("Couldn't load "+path+self.name+"D.pkl.gz")
                     
 def munkres_test(Vects, true_labels,n_clusters=None):
     n_l = len(np.unique(true_labels))
@@ -98,9 +114,10 @@ def munkres_test(Vects, true_labels,n_clusters=None):
     m = Munkres()
     scaler = StandardScaler()
     V = scaler.fit_transform(Vects)
+    #V = Vects
     if n_clusters is None:
         n_clusters = n_l
-    print("Evaluating Clustering, clusters:",n_clusters)
+    print("Evaluating Clustering, clusters:",n_clusters,",vectors:",Vects.shape[1])
     V = (V.T/np.linalg.norm(V,axis=1)).T
     km = KMeans(n_clusters=n_clusters)
     km = KMeans(n_clusters=n_clusters)
@@ -110,5 +127,6 @@ def munkres_test(Vects, true_labels,n_clusters=None):
     mat = pred_hot.T.dot(true_hot)
     permute = np.array(m.compute(-mat))[:,1]
     ac = np.mean(permute[clusters]==true_labels)
-    print("Accuracy:",ac,"NMI:",sklearn.metrics.normalized_mutual_info_score(clusters,true_labels))
-    return ac
+    nmi = sklearn.metrics.normalized_mutual_info_score(clusters,true_labels)
+    print("Accuracy:",ac,"NMI:",nmi)
+    return ac,nmi

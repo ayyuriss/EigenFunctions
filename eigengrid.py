@@ -19,7 +19,7 @@ size = grid_size*2
 k = 32
 input_shape=(3,size,size)
 batch_size = 1024
-game = "GridFinal"+str(size)
+game = "GridFinaRail"+str(size)
 
 env = EnvWrapper(GRID(grid_size=grid_size,max_time= 5000,stochastic = True, square_size=2),
                  record_freq=10, size=size, mode="rgb", frame_count = 1)

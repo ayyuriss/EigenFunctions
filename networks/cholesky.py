@@ -54,9 +54,13 @@ class CholeskyBlock(BaseNetwork):
             y = l(y)
 
     def load(self,fname):
+        load = lambda x : torch.load(x)
+        if U.device.type=='cpu':
+            load = lambda x : torch.load(x,map_location = lambda s,l : s)
+            
         try:
             print("Loading %s.%s"%(fname,self.name))
-            dic = torch.load("%s.%s"%(fname,self.name))
+            dic = load("%s.%s"%(fname,self.name))
             for i,l in enumerate(self.model):
                 l.Sig = dic["Sig%i"%i]
                 l.update_weight()

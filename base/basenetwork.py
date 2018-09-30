@@ -36,13 +36,13 @@ class BaseNetwork(torch.nn.Module):
         y = U.get(self.forward(x).squeeze())
         self.train()
         return y
-    def fit(self,X,Y,batch_size=50,epochs=1,clip=False):
+    def fit(self,X,Y,batch_size=50,epochs=1,clip=False,l1_decay=0.0):
         Xtmp,Ytmp = X.split(batch_size),Y.split(batch_size)
         for _ in range(epochs):
             self.progbar.__init__(len(Xtmp))
             for x,y in zip(Xtmp,Ytmp):
                 #self.optimizer.zero_grad()
-                loss = self.loss(self.forward(x),y)
+                loss = self.loss(self.forward(x),y)+l1_decay*self.l1_weight()
                 self.optimize(loss,clip)
                 new_loss = self.loss(self.forward(x).detach(),y)
                 self.progbar.add(1,values=[("old",U.get(loss)),("new",U.get(new_loss))])
@@ -66,9 +66,12 @@ class BaseNetwork(torch.nn.Module):
         self.summary()
 
     def load(self,fname):
+        load = lambda x : torch.load(x)
+        if U.device.type=='cpu':
+            load = lambda x : torch.load(x,map_location = lambda s,l : s)
         try:
             print("Loading %s.%s"%(fname,self.name))
-            dic = torch.load(fname+"."+self.name)
+            dic = load(fname+"."+self.name)
             super(BaseNetwork,self).load_state_dict(dic)
         except:
             C.warning("Couldn't load %s"%fname)
@@ -83,7 +86,7 @@ class BaseNetwork(torch.nn.Module):
         self.flaten.set(net2.flaten.get())
     def l1_weight(self):
         res = 0
-        l = nn.L1Loss(size_average=False)
+        l = nn.L1Loss()
         for p in self.parameters():
             res += l(p,(0.0*p).detach())
         return res/self.flaten.total_size
@@ -153,11 +156,34 @@ class HardTanh(nn.Module):
         return (self.alpha*input).sign()
     
 class AdaptiveTanh(nn.Module):
+    def __init__(self,in_features=1):
+        super(AdaptiveTanh,self).__init__()
+        self.alpha = nn.Parameter(torch.ones(in_features))
+#        self.alpha = nn.Parameter(torch.ones(1))
+
+    def forward(self, input):
+        #return (input*self.alpha).tanh()
+        return (input.transpose(1,-1)*self.alpha).transpose(1,-1).tanh()
+    
+class FastArcTan(nn.Module):
+    def __init__(self,in_features):
+        super(FastArcTan,self).__init__()
+        self.alpha = nn.Parameter(torch.ones(in_features))
+        #self.alpha = nn.Parameter(torch.ones(1))
+    def forward(self, input):
+        
+        return (input.transpose(1,-1)*self.alpha).transpose(1,-1).atan()
+        #return (input*self.alpha).atan()
+        
+
+"""
+class AdaptiveTanh(nn.Module):
     def __init__(self):
         super(AdaptiveTanh,self).__init__()
-        self.alpha = nn.Parameter(torch.tensor(6.0))
+        self.alpha = nn.Parameter(torch.tensor(1.0))
     def forward(self, input):
-        return (self.alpha*input).tanh()
+        return (input*self.alpha).tanh()
+   """ 
 
 class Flatten(nn.Module):
     def forward(self, input):
@@ -171,16 +197,12 @@ class ResNetBlock(nn.Module):
     def forward(self, x):
         return self.conv1(x) + self.conv2(x)
     
-class EigenLayer(nn.Linear):
+class EigenLayer(nn.Module):
     """
         Taking the output and adding 1 as the first columns
     """
-    def __init__(self, in_features, out_features, bias=True):
-        super(EigenLayer, self).__init__(in_features, out_features-1, bias)
-
     def forward(self,input):
-        output = nn.functional.linear(input, self.weight, self.bias)
-        return torch.cat([U.torchify(np.ones((input.shape[0],1))),output],dim=-1)
+        return torch.cat([U.torchify(np.ones((input.shape[0],1))),input],dim=-1)
 
 
 def flatten(x):
